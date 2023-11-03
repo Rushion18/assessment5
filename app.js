@@ -32,3 +32,50 @@ app.post('/notes', async (req, res) => {
     }
 });
 
+//fetch 
+app.get('/notes/:id', async (req,res)=>{
+    try{
+        const request = new mssql.Request();
+        const result = await request.query('SELECT * FROM Notes');
+
+        res.status(200).json({ notes: result.recordset});
+    }catch (err ){
+        res.status(500).json({ message: 'Failed to fetch notes', error: err });
+    }
+});
+
+//get single
+
+app.get('/notes/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const request= new mssql.Request();
+        const result = await RequestError.query('SELECT * FROM Notes WHERE ID = @ID', { ID: id });
+
+        if (result.recordset.lenth === 0) {
+            res.status(404).json({ message: 'Note not found' });
+        } else {
+            res.status(200).json ({ note: result.recordset[0] });
+        }
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch note', error: err });
+    }
+});
+
+//update 
+app.put('/notes/:id', async (req, res) => {
+    try{
+        const id = req.params.id;
+        const { Title, Content } =req.body;
+        const request = new mssql.Request();
+        await request.query('UPDATE Notes SET Title = @Title, Content = @Content WHERE ID = @ID', {
+            ID: id,
+            Title: Title,
+            Content: Content
+        });
+        res.status(200).json({message:'Note updated'});
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update note', error: err });
+    }
+});
